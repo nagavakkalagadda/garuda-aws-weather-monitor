@@ -1,0 +1,53 @@
+/**
+ * GARUDA // Frontend API Client
+ */
+
+const API_BASE = '/api';
+
+export async function fetchAllWeatherData({ city, state, country, latitude, longitude, mode = 'auto', anomaly_scenario = null }) {
+  const params = new URLSearchParams();
+  if (city) params.append('city', city);
+  if (state) params.append('state', state);
+  if (country) params.append('country', country);
+  if (latitude !== undefined) params.append('latitude', latitude);
+  if (longitude !== undefined) params.append('longitude', longitude);
+  if (mode) params.append('mode', mode);
+  if (anomaly_scenario) params.append('anomaly_scenario', anomaly_scenario);
+
+  const res = await fetch(`${API_BASE}/weather/all?${params.toString()}`);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Weather request failed: HTTP ${res.status}`);
+  }
+  return await res.json();
+}
+
+export async function searchLocations(query) {
+  const res = await fetch(`${API_BASE}/location/search?query=${encodeURIComponent(query || '')}`);
+  if (!res.ok) throw new Error('Location lookup failed');
+  const data = await res.json();
+  return data.results || [];
+}
+
+export async function getPresetLocations() {
+  const res = await fetch(`${API_BASE}/location/presets`);
+  if (!res.ok) throw new Error('Failed to fetch station presets');
+  const data = await res.json();
+  return data.presets || [];
+}
+
+export async function askAiAssistant(query, context) {
+  const res = await fetch(`${API_BASE}/assistant/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, context })
+  });
+  if (!res.ok) throw new Error('AI Assistant communication failure');
+  return await res.json();
+}
+
+export async function getTelemetryStatus() {
+  const res = await fetch(`${API_BASE}/telemetry/status`);
+  if (!res.ok) throw new Error('Telemetry request failed');
+  return await res.json();
+}

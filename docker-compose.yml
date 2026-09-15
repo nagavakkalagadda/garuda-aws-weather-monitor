@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  garuda-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: garuda_weather_monitor
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:garuda_secret@postgres:5432/garuda_db
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: garuda_postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: garuda_secret
+      POSTGRES_DB: garuda_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schema/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/schema/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    restart: unless-stopped
+
+volumes:
+  pgdata:
