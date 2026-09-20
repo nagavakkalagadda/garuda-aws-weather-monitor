@@ -1,5 +1,5 @@
 /**
- * GARUDA // Frontend API Client
+ * SKYGUARD AI // Synoptic Atmospheric API Client
  */
 
 const API_BASE = '/api';
@@ -17,8 +17,14 @@ export async function fetchAllWeatherData({ city, state, country, latitude, long
   const res = await fetch(`${API_BASE}/weather/all?${params.toString()}`);
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `Weather request failed: HTTP ${res.status}`);
+    throw new Error(errorData.error?.message || `Atmospheric telemetry stream failed: HTTP ${res.status}`);
   }
+  return await res.json();
+}
+
+export async function fetchRegionalShifts() {
+  const res = await fetch(`${API_BASE}/weather/regional-shifts`);
+  if (!res.ok) throw new Error('Failed to fetch planetary regional shifts');
   return await res.json();
 }
 
@@ -36,13 +42,33 @@ export async function getPresetLocations() {
   return data.presets || [];
 }
 
+export async function loginOperator(credentials) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials)
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Operator authentication failed');
+  }
+  return data;
+}
+
+export async function getDemoOperators() {
+  const res = await fetch(`${API_BASE}/auth/operators`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.operators || [];
+}
+
 export async function askAiAssistant(query, context) {
   const res = await fetch(`${API_BASE}/assistant/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, context })
   });
-  if (!res.ok) throw new Error('AI Assistant communication failure');
+  if (!res.ok) throw new Error('SKYGUARD Synoptic Copilot offline');
   return await res.json();
 }
 

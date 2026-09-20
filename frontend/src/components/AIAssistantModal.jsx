@@ -21,8 +21,8 @@ export default function AIAssistantModal({
   const [messages, setMessages] = useState([
     {
       id: 1,
-      sender: "garuda",
-      text: `Greetings. I am the GARUDA Meteorological AI Copilot. I am actively monitoring telemetry for ${weatherContext?.location?.city || "your station"}. How can I assist you with anomaly diagnostics, thermodynamic formulas, or safety recommendations today?`
+      sender: "skyguard",
+      text: `Greetings Operator. I am the SKYGUARD AI Synoptic Copilot. I am actively monitoring telemetry and planetary shifts for ${weatherContext?.location?.city || "your station"}. How can I assist you with atmospheric delta diagnostics, isobaric lapse rates, or convective hazard analysis?`
     }
   ]);
   const [inputQuery, setInputQuery] = useState('');
@@ -32,9 +32,9 @@ export default function AIAssistantModal({
 
   const quickPrompts = [
     `Why is the anomaly status currently ${weatherContext?.anomaly?.severity || "NORMAL"}?`,
-    "Explain the difference between Wet-Bulb and Apparent Temperature",
-    "What safety precautions are advised right now?",
-    "How does GARUDA's Isolation Forest algorithm work?"
+    "Explain the 3-hour Barometric Tendency (ΔP/3h) and cyclogenesis risk",
+    "What safety and operational precautions are advised right now?",
+    "How does SKYGUARD's Isolation Forest and Delta Radar function?"
   ];
 
   const handleSend = async (queryText) => {
@@ -50,12 +50,14 @@ export default function AIAssistantModal({
       const res = await askAiAssistant(q, {
         weather: weatherContext?.current,
         location: weatherContext?.location,
-        anomaly: weatherContext?.anomaly
+        anomaly: weatherContext?.anomaly,
+        regionalShifts: weatherContext?.regionalShifts,
+        localDelta: weatherContext?.localDelta
       });
 
       const assistantMsg = {
         id: Date.now() + 1,
-        sender: "garuda",
+        sender: "skyguard",
         text: res.answer || "Diagnostic response completed."
       };
       setMessages((prev) => [...prev, assistantMsg]);
@@ -64,7 +66,7 @@ export default function AIAssistantModal({
         ...prev,
         {
           id: Date.now() + 1,
-          sender: "garuda",
+          sender: "skyguard",
           text: `Telemetry reasoning error: ${err.message}. Defaulting to baseline advisory.`
         }
       ]);
@@ -77,18 +79,18 @@ export default function AIAssistantModal({
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm transition-all duration-300">
       
       {/* Sliding Drawer Container */}
-      <div className="w-full max-w-lg h-full bg-dark-900 border-l border-cyan-500/30 shadow-2xl flex flex-col justify-between">
+      <div className="w-full max-w-lg h-full bg-slate-900 border-l border-sky-500/30 shadow-2xl flex flex-col justify-between">
         
         {/* Drawer Header */}
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-dark-850">
+        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+            <div className="p-2 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400">
               <Bot className="w-5 h-5 animate-pulse" />
             </div>
             <div>
               <h3 className="text-sm font-mono font-bold text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
-                GARUDA // METEOROLOGICAL COPILOT
-                <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/30">AI ASSISTANT</span>
+                SKYGUARD // SYNOPTIC COPILOT
+                <span className="text-[10px] bg-sky-500/20 text-sky-300 px-1.5 py-0.5 rounded border border-sky-500/30">AI ADVISOR</span>
               </h3>
               <p className="text-[11px] text-slate-400 font-mono">
                 Context: {weatherContext?.location?.city || 'Bengaluru'} • {weatherContext?.current?.temperature || 28}°C ({weatherContext?.anomaly?.severity || 'NORMAL'})
@@ -112,13 +114,13 @@ export default function AIAssistantModal({
               className={`flex flex-col ${m.sender === "user" ? "items-end" : "items-start"}`}
             >
               <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
-                {m.sender === "user" ? "Operator Inquiry" : "GARUDA Copilot"}
+                {m.sender === "user" ? "Operator Inquiry" : "SKYGUARD Copilot"}
               </div>
               <div
                 className={`p-3.5 rounded-xl text-xs leading-relaxed max-w-[90%] font-sans whitespace-pre-line ${
                   m.sender === "user"
-                    ? "bg-cyan-500/20 border border-cyan-500/40 text-slate-100"
-                    : "bg-dark-850 border border-slate-800 text-slate-200 shadow-md"
+                    ? "bg-sky-500/20 border border-sky-500/40 text-slate-100"
+                    : "bg-slate-950 border border-slate-800 text-slate-200 shadow-md"
                 }`}
               >
                 {m.text}
@@ -127,17 +129,17 @@ export default function AIAssistantModal({
           ))}
 
           {isThinking && (
-            <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 p-2">
-              <div className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center gap-2 text-xs font-mono text-sky-400 p-2">
+              <div className="w-3 h-3 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
               <span>Analyzing atmospheric features and climatological baseline...</span>
             </div>
           )}
         </div>
 
         {/* Quick Suggested Inquiry Chips */}
-        <div className="p-3 border-t border-slate-800/80 bg-dark-850/60">
+        <div className="p-3 border-t border-slate-800/80 bg-slate-950/60">
           <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-cyan-400" /> Suggested Queries for Beginners:
+            <Sparkles className="w-3 h-3 text-sky-400" /> Suggested Synoptic Queries:
           </div>
           <div className="flex flex-wrap gap-1.5">
             {quickPrompts.map((prompt, idx) => (

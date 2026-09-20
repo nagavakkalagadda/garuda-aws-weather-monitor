@@ -14,6 +14,7 @@ const anomalyRoutes = require("./routes/anomaly");
 const locationRoutes = require("./routes/location");
 const assistantRoutes = require("./routes/assistant");
 const telemetryRoutes = require("./routes/telemetry");
+const authRoutes = require("./routes/auth");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +23,7 @@ app.use(cors());
 app.use(express.json());
 
 // API Route Mounts
+app.use("/api/auth", authRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/anomaly", anomalyRoutes);
 app.use("/api/location", locationRoutes);
@@ -31,18 +33,20 @@ app.use("/api/telemetry", telemetryRoutes);
 // API Status Info Endpoint
 app.get("/api", (req, res) => {
   res.json({
-    title: "GARUDA // AWS INTELLIGENT WEATHER MONITOR",
-    subtitle: "AI/ML BASED WEATHER ANOMALY DETECTION SYSTEM (MINIMALIST 3D)",
-    version: "2.0.0",
+    title: "SKYGUARD AI // SYNOPTIC ATMOSPHERIC SURVEILLANCE",
+    subtitle: "PLANETARY ATMOSPHERIC DELTA & REGIONAL SHIFT RADAR",
+    version: "3.0.0",
     status: "OPERATIONAL",
     endpoints: [
+      "/api/auth/login",
+      "/api/auth/operators",
       "/api/weather/all",
+      "/api/weather/regional-shifts",
       "/api/weather/current",
       "/api/weather/forecast",
       "/api/weather/historical",
       "/api/anomaly/detect",
       "/api/location/search",
-      "/api/location/presets",
       "/api/assistant/chat",
       "/api/telemetry/status"
     ]
@@ -70,8 +74,9 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log("================================================================");
-  console.log("  GARUDA // AWS INTELLIGENT WEATHER MONITOR (v2.0)");
-  console.log(`  PRODUCTION SERVER RUNNING ON PORT: http://localhost:${PORT}`);
-  console.log("  STATUS: ONLINE & FULLY DEPLOYED");
+  console.log("  SKYGUARD AI // SYNOPTIC ATMOSPHERIC SURVEILLANCE v3.0");
+  console.log("  PLANETARY ATMOSPHERIC DELTA & REGIONAL SHIFT RADAR");
+  console.log(`  OPERATIONAL SERVER RUNNING: http://localhost:${PORT}`);
+  console.log("  STATUS: ACTIVE & SECURED (CLEARANCE LEVEL ENFORCED)");
   console.log("================================================================");
 });

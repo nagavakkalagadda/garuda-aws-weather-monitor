@@ -51,7 +51,8 @@ export default function PrimaryWeatherHero({
   anomalyPercentage = 8,
   lastUpdated,
   isDemo = false,
-  dataSourceLabel = "LIVE TELEMETRY"
+  dataSourceLabel = "LIVE TELEMETRY",
+  localDelta = null
 }) {
   const temp = currentWeather?.temperature ?? 28.0;
   const feelsLike = currentWeather?.feels_like ?? 30.0;
@@ -164,9 +165,9 @@ export default function PrimaryWeatherHero({
           <div className="flex items-center gap-5 lg:pr-4">
             
             {/* 3D WebGL Atmosphere Visualizer Core */}
-            <div className="relative p-2 rounded-2xl bg-dark-900/90 border border-cyan-500/30 shadow-[0_12px_24px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] flex items-center justify-center overflow-hidden">
+            <div className="relative p-2 rounded-2xl bg-slate-900/90 border border-sky-500/30 shadow-[0_12px_24px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] flex items-center justify-center overflow-hidden">
               <Minimal3DWeatherVisualizer theme={theme} condition={condition} className="w-24 h-24 sm:w-28 sm:h-28" />
-              <div className="absolute bottom-1 right-2 pointer-events-none font-mono text-[8px] text-cyan-400/80 uppercase">
+              <div className="absolute bottom-1 right-2 pointer-events-none font-mono text-[8px] text-sky-400/80 uppercase">
                 3D MESH
               </div>
             </div>
@@ -178,7 +179,7 @@ export default function PrimaryWeatherHero({
               <div className="text-xs sm:text-sm text-slate-400 font-mono mt-1">
                 Station: {location?.city || 'Bengaluru'}, {location?.country || 'India'}
               </div>
-              <div className="text-[11px] text-cyan-400 font-mono mt-0.5">
+              <div className="text-[11px] text-sky-400 font-mono mt-0.5">
                 Lat: {location?.latitude?.toFixed(4)}° • Lon: {location?.longitude?.toFixed(4)}°
               </div>
             </div>
@@ -186,6 +187,39 @@ export default function PrimaryWeatherHero({
           </div>
 
         </div>
+
+        {/* Local Rate-of-Change Barometric & Thermal Tendency Strip */}
+        {localDelta && (
+          <div className="mt-6 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs font-mono relative z-10">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">ATMOSPHERIC TENDENCY:</span>
+              <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200 font-bold">
+                {localDelta.barometricTendency.replace('_', ' ')}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500">3-HR ΔP:</span>
+                <span className={`font-bold ${localDelta.deltaP_3h < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {localDelta.deltaP_3h > 0 ? `+${localDelta.deltaP_3h}` : localDelta.deltaP_3h} hPa
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500">HOURLY ΔT:</span>
+                <span className={`font-bold ${localDelta.deltaT_1h < 0 ? 'text-sky-300' : 'text-amber-300'}`}>
+                  {localDelta.deltaT_1h > 0 ? `+${localDelta.deltaT_1h}` : localDelta.deltaT_1h}°C
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500">GUST SHEAR:</span>
+                <span className="font-bold text-slate-200">+{localDelta.windGustDelta} km/h</span>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </TiltCard3D>

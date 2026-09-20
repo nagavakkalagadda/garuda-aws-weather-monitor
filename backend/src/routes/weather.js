@@ -5,6 +5,7 @@ const express = require("express");
 const router = express.Router();
 const { createWeatherProvider } = require("../services/weatherProvider");
 const anomalyService = require("../services/anomalyService");
+const atmosphericShiftService = require("../services/atmosphericShiftService");
 
 // GET /api/weather/all - Main composite endpoint
 router.get("/all", async (req, res, next) => {
@@ -55,13 +56,31 @@ router.get("/all", async (req, res, next) => {
       location: weatherData.location
     });
 
+    // Compute instantaneous local atmospheric rate-of-change
+    const localAtmosphericDelta = atmosphericShiftService.calculateLocalDelta(weatherData.current);
+
+    // Fetch planetary regional atmospheric shifts across all 6 global sectors
+    const regionalShifts = atmosphericShiftService.getGlobalRegionalShifts();
+
     res.json({
       success: true,
       weather: weatherData,
-      anomaly: anomalyResult
+      anomaly: anomalyResult,
+      local_delta: localAtmosphericDelta,
+      regional_shifts: regionalShifts
     });
   } catch (err) {
     next(err);
+  }
+});
+
+// GET /api/weather/regional-shifts - Dedicated planetary atmospheric shifts endpoint
+router.get("/regional-shifts", (req, res) => {
+  try {
+    const shifts = atmosphericShiftService.getGlobalRegionalShifts();
+    res.json({ success: true, ...shifts });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

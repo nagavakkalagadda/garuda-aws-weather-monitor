@@ -21,20 +21,20 @@ export default function ArchitectureModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
       
-      <div className="w-full max-w-4xl max-h-[90vh] bg-dark-900 border border-cyan-500/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden font-mono">
+      <div className="w-full max-w-4xl max-h-[90vh] bg-slate-900 border border-sky-500/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden font-mono">
         
         {/* Modal Header */}
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-dark-850">
+        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+            <div className="p-2 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400">
               <Layers className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-100 uppercase tracking-wider">
-                GARUDA SYSTEM ARCHITECTURE & ML SPECIFICATION
+                SKYGUARD AI // SYSTEM ARCHITECTURE & SYNOPTIC SPEC
               </h3>
               <p className="text-xs text-slate-400">
-                AI/ML Based Intelligent Meteorological Anomaly Detection System (v2.0)
+                Planetary Atmospheric Surveillance, Regional Delta Radar & ML Isolation Forest Engine (v3.0)
               </p>
             </div>
           </div>

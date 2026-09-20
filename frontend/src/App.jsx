@@ -13,6 +13,9 @@ import Forecast7Day from './components/Forecast7Day';
 import AlertsPanel from './components/AlertsPanel';
 import AIAssistantModal from './components/AIAssistantModal';
 import ArchitectureModal from './components/ArchitectureModal';
+import LoginModal from './components/LoginModal';
+import RapidAtmosphericTicker from './components/RapidAtmosphericTicker';
+import RegionalShiftRadar from './components/RegionalShiftRadar';
 import TiltCard3D from './components/TiltCard3D';
 import { fetchAllWeatherData, getPresetLocations } from './services/api';
 import { ShieldAlert, AlertTriangle, RefreshCw, Cpu, Database, Radio, Activity, Globe } from 'lucide-react';
@@ -24,6 +27,17 @@ const DEFAULT_LOCATION = {
   latitude: 12.9716,
   longitude: 77.5946,
   elevation: 920
+};
+
+const DEFAULT_OPERATOR = {
+  id: "OP-4329-CHIEF",
+  name: "Dr. Aris Thorne",
+  title: "Chief Synoptic Meteorologist",
+  email: "commander@skyguard.ai",
+  station: "WMO-43295 / Atmospheric Surveillance Ops",
+  clearanceLevel: 4,
+  clearanceLabel: "LEVEL 4 // FULL OVERRIDE",
+  role: "CHIEF_FORECASTER"
 };
 
 // Web Audio synthesizer chime for critical alerts
@@ -53,7 +67,9 @@ export default function App() {
   const [presetLocations, setPresetLocations] = useState([]);
   const [weatherData, setWeatherData] = useState(null);
   const [anomalyData, setAnomalyData] = useState(null);
-  const [tempUnit, setTempUnit] = useState(() => localStorage.getItem('garuda_unit') || 'C');
+  const [regionalShifts, setRegionalShifts] = useState(null);
+  const [localDelta, setLocalDelta] = useState(null);
+  const [tempUnit, setTempUnit] = useState(() => localStorage.getItem('skyguard_unit') || 'C');
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [currentScenario, setCurrentScenario] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,6 +78,17 @@ export default function App() {
   const [soundAlertsEnabled, setSoundAlertsEnabled] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isArchitectureOpen, setIsArchitectureOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  // Authenticated operator state with localStorage persistence
+  const [currentOperator, setCurrentOperator] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skyguard_operator_session');
+      return saved ? JSON.parse(saved) : DEFAULT_OPERATOR;
+    } catch {
+      return DEFAULT_OPERATOR;
+    }
+  });
 
   const prevSeverityRef = useRef('NORMAL');
 
@@ -89,6 +116,12 @@ export default function App() {
 
       setWeatherData(data.weather);
       setAnomalyData(data.anomaly);
+      if (data.regional_shifts) {
+        setRegionalShifts(data.regional_shifts);
+      }
+      if (data.local_delta) {
+        setLocalDelta(data.local_delta);
+      }
 
       // Play alert tone if severity jumped to WARNING or CRITICAL
       if (data.anomaly?.severity === 'CRITICAL' || data.anomaly?.severity === 'WARNING') {
@@ -124,7 +157,7 @@ export default function App() {
 
   const handleToggleTempUnit = (unit) => {
     setTempUnit(unit);
-    localStorage.setItem('garuda_unit', unit);
+    localStorage.setItem('skyguard_unit', unit);
   };
 
   const handleToggleDemoMode = () => {
@@ -138,6 +171,27 @@ export default function App() {
   const handleSelectLocation = (loc) => {
     setCurrentLocation(loc);
     setCurrentScenario(null);
+  };
+
+  const handleLoginSuccess = (user) => {
+    setCurrentOperator(user);
+    try {
+      localStorage.setItem('skyguard_operator_session', JSON.stringify(user));
+    } catch {}
+  };
+
+  const handleLogoutOperator = () => {
+    setCurrentOperator(null);
+    try {
+      localStorage.removeItem('skyguard_operator_session');
+    } catch {}
+  };
+
+  const handleFocusRadar = () => {
+    const radarElem = document.getElementById('regional-shift-radar');
+    if (radarElem) {
+      radarElem.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const bgTheme = weatherData?.current?.theme || 'cloudy';
@@ -160,8 +214,18 @@ export default function App() {
         onToggleSoundAlerts={() => setSoundAlertsEnabled(prev => !prev)}
         onOpenAssistant={() => setIsAssistantOpen(true)}
         onOpenArchitecture={() => setIsArchitectureOpen(true)}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
+        currentOperator={currentOperator}
+        onLogoutOperator={handleLogoutOperator}
         apiStatus={weatherData?.apiStatus || (isDemoMode ? "DEMO_MODE" : "CONNECTED")}
-        dataQuality={weatherData?.dataQuality || 98.7}
+        dataQuality={weatherData?.dataQuality || 99.2}
+      />
+
+      {/* Emergency Rapid Atmospheric Ticker Banner */}
+      <RapidAtmosphericTicker
+        regionalShifts={regionalShifts}
+        localDelta={localDelta}
+        onFocusRadar={handleFocusRadar}
       />
 
       {/* Main Container */}
@@ -206,7 +270,7 @@ export default function App() {
             {/* 2. 3D Meteorological Command Section: Primary Weather Hero + 3D Earth Globe */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-6 items-stretch">
               
-              {/* Left (8 Cols): Primary Weather Hero with 3D Visualizer */}
+              {/* Left (8 Cols): Primary Weather Hero with 3D Visualizer & Local Delta */}
               <div className="lg:col-span-8 flex flex-col justify-between">
                 <PrimaryWeatherHero
                   currentWeather={weatherData?.current}
@@ -217,12 +281,13 @@ export default function App() {
                   lastUpdated={weatherData?.lastUpdated}
                   isDemo={weatherData?.isDemo || isDemoMode}
                   dataSourceLabel={weatherData?.dataSourceLabel}
+                  localDelta={localDelta}
                 />
               </div>
 
               {/* Right (4 Cols): Minimalist 3D Interactive Meteorological Globe */}
               <div className="lg:col-span-4 h-full flex flex-col">
-                <TiltCard3D maxTilt={6} glowColor="rgba(0, 229, 255, 0.15)" className="h-full">
+                <TiltCard3D maxTilt={6} glowColor="rgba(56, 189, 248, 0.15)" className="h-full">
                   <div className="card-3d rounded-2xl p-3 border border-slate-800 h-full flex flex-col justify-between">
                     <Minimal3DGlobe
                       currentLocation={weatherData?.location || currentLocation}
@@ -235,52 +300,62 @@ export default function App() {
 
             </div>
 
-            {/* 3. AI / ML Anomaly Detection Engine Card (with 3D Gyroscope Hologram) */}
+            {/* 3. Dedicated Planetary Atmospheric Delta & Regional Shift Radar */}
+            <RegionalShiftRadar
+              regionalShifts={regionalShifts}
+              localDelta={localDelta}
+              onSelectRegionCoordinates={(coords) => {
+                handleSelectLocation(coords);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+
+            {/* 4. AI / ML Anomaly Detection Engine Card (with 3D Gyroscope Hologram) */}
             <AnomalyEngineCard
               anomalyData={anomalyData}
               onSelectScenario={handleSelectScenario}
               currentScenario={currentScenario}
             />
 
-            {/* 4. Anomaly Causal Explanation & Multi-Parameter Risk Panel */}
+            {/* 5. Anomaly Causal Explanation & Multi-Parameter Risk Panel */}
             <AnomalyExplanation
               anomalyData={anomalyData}
               tempUnit={tempUnit}
             />
 
-            {/* 5. 8-Type Dedicated Temperature Monitoring Suite (with 3D Tactile Physics) */}
+            {/* 6. 8-Type Dedicated Temperature Monitoring Suite */}
             <TemperatureGrid
               currentWeather={weatherData?.current}
               historicalComparison={weatherData?.historical_comparison}
               tempUnit={tempUnit}
             />
 
-            {/* 6. Atmospheric Telemetry Parameters & Air Quality */}
+            {/* 7. Atmospheric Telemetry Parameters & Air Quality */}
             <WeatherParametersGrid
               currentWeather={weatherData?.current}
             />
 
-            {/* 7. Current vs Historical Climate Horizons */}
+            {/* 8. Current vs Historical Climate Horizons */}
             <HistoricalComparison
               historicalData={weatherData?.historical_comparison}
               currentTemp={weatherData?.current?.temperature ?? 28}
               tempUnit={tempUnit}
             />
 
-            {/* 8. Interactive Meteorological Charts (8 Tabs) */}
+            {/* 9. Interactive Meteorological Charts (8 Tabs) */}
             <WeatherCharts
               hourlyTrends={weatherData?.hourly_trends || []}
               anomalyScore={anomalyData?.percentage || 8}
               tempUnit={tempUnit}
             />
 
-            {/* 9. 7-Day Forecast & Anomaly Projections */}
+            {/* 10. 7-Day Forecast & Anomaly Projections */}
             <Forecast7Day
               forecast={weatherData?.forecast || []}
               tempUnit={tempUnit}
             />
 
-            {/* 10. Intelligent Weather Alerts Feed */}
+            {/* 11. Intelligent Weather Alerts Feed */}
             <AlertsPanel
               alerts={anomalyData?.alerts || []}
               anomalyStatus={anomalyData?.severity || 'NORMAL'}
@@ -291,19 +366,19 @@ export default function App() {
       </main>
 
       {/* Footer & Telemetry Health */}
-      <footer className="border-t border-slate-800/80 bg-dark-900/90 py-5 px-4 lg:px-8 mt-12 text-xs font-mono text-slate-500">
+      <footer className="border-t border-slate-800/80 bg-slate-950 py-5 px-4 lg:px-8 mt-12 text-xs font-mono text-slate-500">
         <div className="max-w-[1750px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-cyan-400 font-bold tracking-wider">GARUDA // AWS</span>
+            <span className="text-sky-400 font-bold tracking-wider">SKYGUARD AI</span>
             <span>•</span>
-            <span>INTELLIGENT WEATHER ANOMALY DETECTION PLATFORM</span>
+            <span>SYNOPTIC ATMOSPHERIC SURVEILLANCE & SHIFT RADAR</span>
             <span>•</span>
-            <span className="text-slate-400">MINIMALIST 3D EDITION</span>
+            <span className="text-slate-400">OPERATIONAL EDITION v3.0</span>
           </div>
 
           <div className="flex items-center gap-4 text-[11px]">
             <span className="flex items-center gap-1.5 text-emerald-400">
-              <Activity className="w-3.5 h-3.5" /> SYSTEM OPERATIONAL
+              <Activity className="w-3.5 h-3.5" /> SURVEILLANCE ACTIVE
             </span>
             <span>•</span>
             <span className="text-slate-400">
@@ -313,6 +388,14 @@ export default function App() {
         </div>
       </footer>
 
+      {/* Operator Authentication Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        currentOperator={currentOperator}
+      />
+
       {/* Interactive AI Meteorological Copilot Drawer */}
       <AIAssistantModal
         isOpen={isAssistantOpen}
@@ -320,7 +403,9 @@ export default function App() {
         weatherContext={{
           current: weatherData?.current,
           location: weatherData?.location || currentLocation,
-          anomaly: anomalyData
+          anomaly: anomalyData,
+          regionalShifts: regionalShifts,
+          localDelta: localDelta
         }}
       />
 
